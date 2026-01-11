@@ -76,7 +76,7 @@ public class ArchDefinitions {
         if (LimboApplication.arch == Config.Arch.x86 || LimboApplication.arch == Config.Arch.x86_64
                 || LimboApplication.arch == Config.Arch.arm || LimboApplication.arch == Config.Arch.arm64
                 || LimboApplication.arch == Config.Arch.ppc || LimboApplication.arch == Config.Arch.ppc64) {
-            //vgaValues.add("std"); //std does not work on arm64
+            vgaValues.add("std");
         }
 
         if (LimboApplication.arch == Config.Arch.x86 || LimboApplication.arch == Config.Arch.x86_64) {
@@ -90,7 +90,6 @@ public class ArchDefinitions {
         }
 
         if (LimboApplication.arch == Config.Arch.arm || LimboApplication.arch == Config.Arch.arm64) {
-            vgaValues.add("virtio-ramfb");
             vgaValues.add("virtio-gpu-pci");
         }
 
@@ -104,24 +103,23 @@ public class ArchDefinitions {
 
     public static ArrayList<String> getKeyboardValues(Context context) {
         ArrayList<String> arrList = new ArrayList<>();
-        arrList.add("none");
-        arrList.add("telnet:127.0.0.1:8021");
-        arrList.add("telnet:0:8021");
+        arrList.add("en-us");
         return arrList;
     }
 
     public static ArrayList<String> getMouseValues(Context context) {
         ArrayList<String> arrList = new ArrayList<>();
-        arrList.add("usb-tablet" + " " + context.getString(R.string.fixesMouseParen));
+        arrList.add("ps2");
         arrList.add("usb-mouse");
+        arrList.add("usb-tablet" + " " + context.getString(R.string.fixesMouseParen));
         return arrList;
     }
 
     public static ArrayList<String> getUIValues() {
         ArrayList<String> arrList = new ArrayList<>();
         arrList.add("VNC");
-//        if (Config.enable_SDL)
-//            arrList.add("SDL");
+        if (Config.enable_SDL)
+            arrList.add("SDL");
         return arrList;
     }
 

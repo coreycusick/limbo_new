@@ -172,10 +172,10 @@ public class MachineImporter {
 
                             // Other
                             case "DISABLE_ACPI":
-                                mach.setSetFourCore(Integer.parseInt(machineAttr[i].replace("\"", "")));
+                                mach.setDisableACPI(Integer.parseInt(machineAttr[i].replace("\"", "")));
                                 break;
                             case "DISABLE_HPET":
-                                mach.setUnlockedUEFI(Integer.parseInt(machineAttr[i].replace("\"", "")));
+                                mach.setDisableHPET(Integer.parseInt(machineAttr[i].replace("\"", "")));
                                 break;
                             case "DISABLE_TSC":
                                 mach.setDisableTSC(Integer.parseInt(machineAttr[i].replace("\"", "")));
@@ -210,8 +210,8 @@ public class MachineImporter {
                             case "KEYBOARD":
                                 mach.setKeyboard(machineAttr[i].replace("\"", ""));
                                 break;
-                            case "ENABLE_UEFI":
-                                mach.setEnableUEFI(Integer.parseInt(machineAttr[i].replace("\"", "")));
+                            case "ENABLE_MTTCG":
+                                mach.setEnableMTTCG(Integer.parseInt(machineAttr[i].replace("\"", "")));
                                 break;
                             case "ENABLE_KVM":
                                 mach.setEnableKVM(Integer.parseInt(machineAttr[i].replace("\"", "")));

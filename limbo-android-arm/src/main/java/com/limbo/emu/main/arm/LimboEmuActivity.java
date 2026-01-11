@@ -32,9 +32,9 @@ public class LimboEmuActivity extends LimboActivity {
 
     protected void loadQEMULib(){
         try {
-            System.loadLibrary("qemu-system-arm");
+            //System.loadLibrary("qemu-system-arm");
         } catch (Error ex) {
-            System.loadLibrary("qemu-system-aarch64");
+            //System.loadLibrary("qemu-system-aarch64");
         }
 
     }

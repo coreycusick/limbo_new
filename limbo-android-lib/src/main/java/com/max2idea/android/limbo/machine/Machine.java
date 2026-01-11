@@ -18,7 +18,6 @@
  */
 package com.max2idea.android.limbo.machine;
 
-import com.limbo.emu.lib.R;
 import com.max2idea.android.limbo.main.Config;
 import com.max2idea.android.limbo.main.LimboApplication;
 
@@ -32,20 +31,20 @@ public class Machine extends Observable {
     private static String TAG = "Machine";
 
     private String name;
-    private String keyboard;
-    private String mouse = "usb-tablet";
-    private int enableVNC = 1;
+    private String keyboard = Config.defaultKeyboardLayout;
+    private String mouse = "ps2";
+    private int enableVNC;
     private String arch;
     private String machineType;
-    private String cpu = "host";
+    private String cpu = "Default";
     private int cpuNum = 1;
     private int memory = 128;
-    private int enableUEFI;
-    private int enableKVM = 1;
-    private int SetFourCore = 0;
-    private int UnlockedUEFI = 0;
+    private int enableMTTCG;
+    private int enableKVM;
+    private int disableACPI = 0;
+    private int disableHPET = 0;
     private int disableFdBootChk = 0;
-    private int disableTSC = 0; //disabling TSC by default
+    private int disableTSC = 1; //disabling TSC by default
     // Storage
     private String hdaImagePath;
     private String hdbImagePath;
@@ -75,28 +74,15 @@ public class Machine extends Observable {
     private String append;
     // net
     private String network = null;
-    private String networkCard = "e1000";
+    private String networkCard = "ne2k_pci";
     private String guestFwd;
     private String hostFwd;
-    private String DNS = "8.8.8.8";
-
     //display
-    private String vga = "virtio-ramfb";
+    private String vga = "std";
     //sound
     private String soundCard = null;
     //extra qemu params
     private String extraParams;
-
-    private String usb1Path;
-    private String usb2Path;
-    private String usb3Path;
-    private String usb4Path;
-
-    private int enableUSB1;
-    private int enableUSB2;
-    private int enableUSB3;
-    private int enableUSB4;
-
     private int paused;
     private int sharedFolderMode;
 
@@ -186,15 +172,15 @@ public class Machine extends Observable {
         }
     }
 
-    public int getEnableUEFI() {
-        return enableUEFI;
+    public int getEnableMTTCG() {
+        return enableMTTCG;
     }
 
-    void setEnableUEFI(int enableUEFI) {
-        if (this.enableUEFI != enableUEFI) {
-            this.enableUEFI = enableUEFI;
+    void setEnableMTTCG(int enableMTTCG) {
+        if (this.enableMTTCG != enableMTTCG) {
+            this.enableMTTCG = enableMTTCG;
             setChanged();
-            notifyChanged(MachineProperty.ENABLE_UEFI, enableUEFI);
+            notifyChanged(MachineProperty.ENABLE_MTTCG, enableMTTCG);
         }
     }
 
@@ -210,65 +196,15 @@ public class Machine extends Observable {
         }
     }
 
-    public int getEnableUSB1() {
-        return enableUSB1;
+    public int getDisableACPI() {
+        return disableACPI;
     }
 
-    void setenableUSB1(int enableUSB1) {
-        if (this.enableUSB1 != enableUSB1) {
-            this.enableUSB1 = enableUSB1;
+    void setDisableACPI(int disableACPI) {
+        if (this.disableACPI != disableACPI) {
+            this.disableACPI = disableACPI;
             setChanged();
-            notifyChanged(MachineProperty.USB1_ENABLE, enableUSB1);
-        }
-    }
-
-    public int getEnableUSB2() {
-        return enableUSB2;
-    }
-
-    void setenableUSB2(int enableUSB2) {
-        if (this.enableUSB2 != enableUSB2) {
-            this.enableUSB2 = enableUSB2;
-            setChanged();
-            notifyChanged(MachineProperty.USB2_ENABLE, enableUSB2);
-        }
-    }
-
-    void setenableUSB3(int enableUSB3) {
-        if (this.enableUSB3 != enableUSB3) {
-            this.enableUSB3 = enableUSB3;
-            setChanged();
-            notifyChanged(MachineProperty.USB3_ENABLE, enableUSB3);
-        }
-    }
-
-    public int getEnableUSB3() {
-        return enableUSB3;
-    }
-
-
-    void setenableUSB4(int enableUSB4) {
-        if (this.enableUSB4 != enableUSB4) {
-            this.enableUSB4 = enableUSB4;
-            setChanged();
-            notifyChanged(MachineProperty.USB4_ENABLE, enableUSB4);
-        }
-    }
-
-    public int getEnableUSB4() {
-        return enableUSB4;
-    }
-
-
-    public int getSetFourCore() {
-        return SetFourCore;
-    }
-
-    void setSetFourCore(int SetFourCore) {
-        if (this.SetFourCore != SetFourCore) {
-            this.SetFourCore = SetFourCore;
-            setChanged();
-            notifyChanged(MachineProperty.DISABLE_ACPI, SetFourCore);
+            notifyChanged(MachineProperty.DISABLE_ACPI, disableACPI);
         }
 
     }
@@ -640,69 +576,9 @@ public class Machine extends Observable {
 
     }
 
-    public String getDNS() {
-        return DNS;
-    }
-
-    void setDNS(String hostFwd) {
-        if (this.DNS == null || !this.DNS.equals(hostFwd)) {
-            this.DNS = hostFwd;
-            setChanged();
-            notifyChanged(MachineProperty.DNS, hostFwd);
-        }
-
-    }
-
     public String getExtraParams() {
         return extraParams;
     }
-    public String getUSB1path() {
-        return usb1Path;
-    }
-    public String getUSB2path() {
-        return usb2Path;
-    }
-    public String getUSB3path() {
-        return usb3Path;
-    }
-    public String getUSB4path() {
-        return usb4Path;
-    }
-
-    void setUSB1Path(String usb1Path) {
-        if (this.usb1Path == null || !this.usb1Path.equals(usb1Path)) {
-            this.usb1Path = usb1Path;
-            setChanged();
-            notifyChanged(MachineProperty.USB1_PATH, usb1Path);
-        }
-    }
-
-    void setUSB2Path(String usb2Path) {
-        if (this.usb2Path == null || !this.usb2Path.equals(usb2Path)) {
-            this.usb2Path = usb2Path;
-            setChanged();
-            notifyChanged(MachineProperty.USB2_PATH, usb2Path);
-        }
-    }
-
-    void setUSB3Path(String usb3Path) {
-        if (this.usb3Path == null || !this.usb3Path.equals(usb3Path)) {
-            this.usb3Path = usb3Path;
-            setChanged();
-            notifyChanged(MachineProperty.USB3_PATH, usb3Path);
-        }
-    }
-
-    void setUSB4Path(String usb4Path) {
-        if (this.usb4Path == null || !this.usb4Path.equals(usb4Path)) {
-            this.usb4Path = usb4Path;
-            setChanged();
-            notifyChanged(MachineProperty.USB4_PATH, usb4Path);
-        }
-    }
-
-
-
 
     void setExtraParams(String extraParams) {
         if (this.extraParams == null || !this.extraParams.equals(extraParams)) {
@@ -742,12 +618,27 @@ public class Machine extends Observable {
     }
 
     void setDefaults() {
-        arch = "ARM";
-        machineType = "virt";
-        vga = "virtio-ramfb";
-        cpu = "host";
-        networkCard = "virtio";
-
+        if (LimboApplication.arch == Config.Arch.x86 || LimboApplication.arch == Config.Arch.x86_64) {
+            arch = "x86";
+            cpu = "n270";
+            machineType = "pc";
+            networkCard = "Default";
+            disableTSC = 1;
+        } else if (LimboApplication.arch == Config.Arch.arm || LimboApplication.arch == Config.Arch.arm64) {
+            arch = "ARM";
+            machineType = "versatilepb";
+            cpu = "Default";
+            networkCard = "Default";
+        } else if (LimboApplication.arch == Config.Arch.ppc || LimboApplication.arch == Config.Arch.ppc64) {
+            arch = "PPC";
+            machineType = "g3beige";
+            networkCard = "Default";
+        } else if (LimboApplication.arch == Config.Arch.sparc || LimboApplication.arch == Config.Arch.sparc64) {
+            arch = "SPARC";
+            vga = "cg3";
+            machineType = "Default";
+            networkCard = "Default";
+        }
     }
 
     public String getSoundCard() {
@@ -786,16 +677,19 @@ public class Machine extends Observable {
         }
     }
 
-
-    public int getUnlockedUEFI() {
-        return UnlockedUEFI;
+    public int getDisableAcpi() {
+        return disableACPI;
     }
 
-    void setUnlockedUEFI(int UnlockedUEFI) {
-        if (this.UnlockedUEFI != UnlockedUEFI) {
-            this.UnlockedUEFI = UnlockedUEFI;
+    public int getDisableHPET() {
+        return disableHPET;
+    }
+
+    void setDisableHPET(int disableHPET) {
+        if (this.disableHPET != disableHPET) {
+            this.disableHPET = disableHPET;
             setChanged();
-            notifyChanged(MachineProperty.DISABLE_HPET, UnlockedUEFI);
+            notifyChanged(MachineProperty.DISABLE_HPET, disableHPET);
         }
 
     }

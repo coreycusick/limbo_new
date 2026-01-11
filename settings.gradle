@@ -1,2 +1,4 @@
 include ':limbo-android-lib'
 include ':limbo-android-arm'
+include ':limbo-android-x86'
+//project(':limbo-android-x86_').projectDir = new File(rootDir, 'limbo-android-x86/')

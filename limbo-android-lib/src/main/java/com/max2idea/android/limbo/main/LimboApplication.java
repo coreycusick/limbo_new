@@ -36,9 +36,6 @@ import com.max2idea.android.limbo.toast.ToastUtils;
 import java.io.File;
 import java.io.IOException;
 
-import com.topjohnwu.superuser.Shell;
-
-
 /**
  * We use the application context for the initiliazation of some of the Storage and
  * Controller implementations.
@@ -56,8 +53,6 @@ public class LimboApplication extends Application {
     public static Context getInstance() {
         return sInstance;
     }
-
-
 
     public static void setupEnv(Context context) {
         try {
@@ -171,23 +166,10 @@ public class LimboApplication extends Application {
         return limboVersion;
     }
 
-    static {
-        // Set settings before the main shell can be created
-        Shell.enableVerboseLogging = true;
-        Shell.setDefaultBuilder(Shell.Builder.create()
-                .setFlags(Shell.FLAG_REDIRECT_STDERR)
-                .setTimeout(10)
-        );
-    }
-
     @Override
     public void onCreate() {
-
         super.onCreate();
         sInstance = this;
-        Shell.getShell(shell -> {
-
-        });
         try {
             Class.forName("android.os.AsyncTask");
         } catch (Throwable ignore) {

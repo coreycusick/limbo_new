@@ -183,7 +183,7 @@
 
 
             <LinearLayout
-                android:id="@+id/UEFIl"
+                android:id="@+id/mttcgl"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="right|center_vertical"
@@ -193,16 +193,16 @@
                 android:padding="5dp">
 
                 <TextView
-                    android:id="@+id/enableUEFIstr"
+                    android:id="@+id/enablemttcgstr"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="right|center_vertical"
                     android:gravity="right|center_vertical"
-                    android:text="Enable UEFI"
+                    android:text="Enable  MTTCG"
                     android:textSize="15sp" />
 
                 <CheckBox
-                    android:id="@+id/enableUEFIval"
+                    android:id="@+id/enablemttcgval"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="right|center_vertical"
@@ -260,7 +260,7 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="right|center_vertical"
                     android:gravity="right|center_vertical"
-                    android:text="Unlocked UEFI"
+                    android:text="Disable HPET"
                     android:textSize="15sp" />
 
                 <CheckBox
@@ -288,7 +288,7 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="right|center_vertical"
                     android:gravity="right|center_vertical"
-                    android:text="100% Mode"
+                    android:text="Disable TSC"
                     android:textSize="15sp" />
 
                 <CheckBox
@@ -323,7 +323,7 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="right|center_vertical"
                     android:gravity="right|center_vertical"
-                    android:text="100% Success Mode"
+                    android:text="Disable ACPI"
                     android:textSize="15sp" />
 
                 <CheckBox

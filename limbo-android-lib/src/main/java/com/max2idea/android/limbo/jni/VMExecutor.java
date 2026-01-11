@@ -42,12 +42,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-
-import com.topjohnwu.superuser.Shell;
-
 
 
 /**
@@ -65,7 +61,6 @@ class VMExecutor extends MachineExecutor {
     private static int vm_height;
     //TODO: make this a proper singleton but the views should not be able to access it
     private static VMExecutor mInstance;
-    private Shell qemuShell;
 
     VMExecutor(MachineController machineController) {
         super(machineController);
@@ -111,8 +106,6 @@ class VMExecutor extends MachineExecutor {
     public native void nativeRefreshScreen(int value);
 
     public native void nativeEnableAaudio(int value, String aaudioLibName, String aaudioLibPath);
-
-
 
     /**
      * Prints parameters in qemu format
@@ -164,24 +157,19 @@ private String getQemuLibrary() {
 
     private String[] prepareParams(Context context) throws Exception {
         ArrayList<String> paramsList = new ArrayList<>();
-        //paramsList.add(getQemuLibrary());
-
+        paramsList.add(getQemuLibrary());
         addUIOptions(context, paramsList);
-        addLoaderOptions(paramsList);
         addCpuBoardOptions(paramsList);
-        addAccelerationOptions(paramsList);
         addDrives(paramsList);
         addRemovableDrives(paramsList);
         addBootOptions(paramsList);
         addGraphicsOptions(paramsList);
         addAudioOptions(paramsList);
         addNetworkOptions(paramsList);
-        addUSBOptions(paramsList);
-
-        //addGenericOptions(context, paramsList);
-        //addStateOptions(paramsList);
-        //addAdvancedOptions(paramsList);
-
+        addGenericOptions(context, paramsList);
+        addStateOptions(paramsList);
+        addAdvancedOptions(paramsList);
+        addAccelerationOptions(paramsList);
         return paramsList.toArray(new String[0]);
     }
 
@@ -205,49 +193,49 @@ private String getQemuLibrary() {
 
     private void addUIOptions(Context context, ArrayList<String> paramsList) {
         if (MachineController.getInstance().isVNCEnabled()) {
-//            paramsList.add("-vnc");
-//            String vncParam = "";
-//            if (LimboSettingsManager.getVNCEnablePassword(context)) {
-//                //TODO: Allow connections from External
-//                // Use with x509 auth and TLS for encryption
-//                vncParam += ":1";
-//            } else {
-//                // Allow connections only from localhost using localsocket without
-//                // a password
-//                vncParam += Config.defaultVNCHost + ":" + Config.defaultVNCPort;
-//            }
-//            if (LimboSettingsManager.getVNCEnablePassword(context))
-//                vncParam += ",password";
-//
-//            paramsList.add(vncParam);
+            paramsList.add("-vnc");
+            String vncParam = "";
+            if (LimboSettingsManager.getVNCEnablePassword(context)) {
+                //TODO: Allow connections from External
+                // Use with x509 auth and TLS for encryption
+                vncParam += ":1";
+            } else {
+                // Allow connections only from localhost using localsocket without
+                // a password
+                vncParam += Config.defaultVNCHost + ":" + Config.defaultVNCPort;
+            }
+            if (LimboSettingsManager.getVNCEnablePassword(context))
+                vncParam += ",password";
+
+            paramsList.add(vncParam);
 
             //Allow monitor console though it's only supported for VNC, SDL for android doesn't support
             // more than 1 window
-            paramsList.add("-display");
-            paramsList.add("vnc=:0");
+            paramsList.add("-monitor");
+            paramsList.add("vc");
 
         } else {
             //XXX: monitor, serial, and parallel display crashes cause SDL doesn't support more than 1 window
             paramsList.add("-monitor");
             paramsList.add("none");
 
+            paramsList.add("-serial");
+            paramsList.add("none");
+
             paramsList.add("-parallel");
             paramsList.add("none");
         }
 
-        //paramsList.add("-serial stdio");
         if (getMachine().getKeyboard() != null) {
-            paramsList.add("-serial");
-            paramsList.add(getMachine().getKeyboard() + ",server,nowait");
+            paramsList.add("-k");
+            paramsList.add(getMachine().getKeyboard());
         }
 
-        paramsList.add("-device");
-        paramsList.add("qemu-xhci,id=usb-bus");
-        paramsList.add("-device");
-        paramsList.add(getMachine().getMouse() + ",bus=usb-bus.0");
-        paramsList.add("-device");
-        paramsList.add("usb-kbd,bus=usb-bus.0");
-
+        if (getMachine().getMouse() != null && !getMachine().getMouse().equals("ps2")) {
+            paramsList.add("-usb");
+            paramsList.add("-device");
+            paramsList.add(getMachine().getMouse());
+        }
     }
 
     private void addAdvancedOptions(ArrayList<String> paramsList) {
@@ -265,12 +253,9 @@ private String getQemuLibrary() {
         }
     }
 
-    private void addLoaderOptions(ArrayList<String> paramsList) {
+    private void addGenericOptions(Context context, ArrayList<String> paramsList) {
         paramsList.add("-L");
         paramsList.add(LimboApplication.getBasefileDir());
-    }
-
-    private void addGenericOptions(Context context, ArrayList<String> paramsList) {
         if (LimboSettingsManager.getEnableQmp(context)) {
             paramsList.add("-qmp");
             if (getQMPAllowExternal()) {
@@ -306,8 +291,8 @@ private String getQemuLibrary() {
             paramsList.add("-realtime");
             paramsList.add("mlock=off");
         } else {
-//            paramsList.add("-overcommit");
-//            paramsList.add("mem-lock=off");
+            paramsList.add("-overcommit");
+            paramsList.add("mem-lock=off");
         }
 
         paramsList.add("-rtc");
@@ -321,12 +306,11 @@ private String getQemuLibrary() {
 
         //XXX: SMP is not working correctly for some guest OSes
         //so we enable multi core only under KVM
-        // anyway regular emulation is not gaining any benefit unless UEFI is enabled but that
+        // anyway regular emulation is not gaining any benefit unless mttcg is enabled but that
         // doesn't work for x86 guests yet
         if (getMachine().getCpuNum() > 1) {
             paramsList.add("-smp");
-            String numCPU = String.valueOf(getMachine().getCpuNum());
-            paramsList.add(numCPU);
+            paramsList.add(getMachine().getCpuNum() + "");
         }
         if (getMachineType() != null && !getMachineType().equals("Default")) {
             paramsList.add("-M");
@@ -341,19 +325,22 @@ private String getQemuLibrary() {
 
         //XXX: we disable tsc feature for x86 since some guests are kernel panicking
         // if the cpu has not specified by user we use the internal qemu32/64
-        // if (getMachine().getDisableTSC() == 1 && (LimboApplication.arch == Config.Arch.x86 || LimboApplication.arch == Config.Arch.x86_64)) {
-        //     if (cpu == null || cpu.equals("Default")) {
-        //         if (LimboApplication.arch == Config.Arch.x86)
-        //             cpu = "qemu32";
-        //         else if (LimboApplication.arch == Config.Arch.x86_64)
-        //             cpu = "qemu64";
-        //     }
-        //     cpu += ",-tsc";
-        // }
+        if (getMachine().getDisableTSC() == 1 && (LimboApplication.arch == Config.Arch.x86 || LimboApplication.arch == Config.Arch.x86_64)) {
+            if (cpu == null || cpu.equals("Default")) {
+                if (LimboApplication.arch == Config.Arch.x86)
+                    cpu = "qemu32";
+                else if (LimboApplication.arch == Config.Arch.x86_64)
+                    cpu = "qemu64";
+            }
+            cpu += ",-tsc";
+        }
 
-        // if (getMachine().getSetFourCore() != 0) {
-        //     paramsList.add("-no-acpi"); //disable ACPI
-        // }
+        if (getMachine().getDisableAcpi() != 0) {
+            paramsList.add("-no-acpi"); //disable ACPI
+        }
+        if (getMachine().getDisableHPET() != 0) {
+            paramsList.add("-no-hpet"); //        disable HPET
+        }
 
         if (cpu != null && !cpu.equals("Default")) {
             paramsList.add("-cpu");
@@ -367,27 +354,21 @@ private String getQemuLibrary() {
 
     private void addAccelerationOptions(ArrayList<String> paramsList) {
 
-        // add UEFI option here
-        if (getMachine().getEnableUEFI() != 0 ) {
-
-            String BasefileDir = LimboApplication.getBasefileDir();
-            String UEFIdir;
-            if (getMachine().getUnlockedUEFI() != 0 ) {
-                UEFIdir = BasefileDir + "/edk2/edk2_qemu_aarch64.fd";
-            }else{
-                UEFIdir = BasefileDir + "/edk2/edk2_qemu_aarch64_nonvram.fd";
-            }
-            String UEFI_var_dir = BasefileDir + "/edk2/edk2_vars.fd";
-            paramsList.add("-drive if=pflash,format=raw,unit=0,file=" + UEFIdir + ",readonly=on" );
-            paramsList.add("-drive if=pflash,format=raw,unit=1,file=" + UEFI_var_dir);
-        }
-
+        // XXX: we add the acceleration options after the extra params
+        // this is due to QEMU applying the first instance of this option
+        // so the extra params cannot override it.
         if (getMachine().getEnableKVM() != 0) {
-            paramsList.add("-accel kvm");
-        }else{
-            paramsList.add("-accel tcg,tb-size=1024");
+            paramsList.add("-enable-kvm");
+        } else {
+            paramsList.add("-accel");
+            String tcgParams = "tcg";
+            if (getMachine().getEnableMTTCG() != 0) {
+                tcgParams += ",thread=multi";
+            } else {
+                tcgParams += ",thread=single";
+            }
+            paramsList.add(tcgParams);
         }
-
     }
 
     private String getMachineType() {
@@ -403,55 +384,6 @@ private String getQemuLibrary() {
             machineType = null;
         }
         return machineType;
-    }
-
-//    private void addNetworkOptions(ArrayList<String> paramsList) throws Exception {
-//        if (getMachine().getNetwork() == null || getMachine().getNetwork().equals("None")) {
-//            paramsList.add("-nic none");
-//        } else if (getMachine().getNetwork().equals("User")) {
-//            paramsList.add("-device");
-//            String NetworkCard = getMachine().getNetworkCard();
-//            paramsList.add(NetworkCard + ",netdev=net0");
-//
-//            paramsList.add("-netdev");
-//            paramsList.add("user,id=net0,dns=" + getMachine().getDNS());
-//        }
-//    }
-
-
-    private void addUSBOptions(ArrayList<String> paramsList) throws Exception {
-        if (getMachine().getEnableUSB1() != 0) {
-            String usbPath = getMachine().getUSB1path();
-            String bus = usbPath.split("\\.")[0];
-            String addr = usbPath.split("\\.")[1];
-            //-device usb-host,hostbus=3,hostaddr=4
-            String USBout = "-device usb-host,hostbus=" + bus + ",hostaddr=" + addr;
-            paramsList.add(USBout);
-        }
-        if (getMachine().getEnableUSB2() != 0) {
-            String usbPath = getMachine().getUSB2path();
-            String bus = usbPath.split("\\.")[0];
-            String addr = usbPath.split("\\.")[1];
-            //-device usb-host,hostbus=3,hostaddr=4
-            String USBout = "-device usb-host,hostbus=" + bus + ",hostaddr=" + addr;
-            paramsList.add(USBout);
-        }
-        if (getMachine().getEnableUSB3() != 0) {
-            String usbPath = getMachine().getUSB3path();
-            String bus = usbPath.split("\\.")[0];
-            String addr = usbPath.split("\\.")[1];
-            //-device usb-host,hostbus=3,hostaddr=4
-            String USBout = "-device usb-host,hostbus=" + bus + ",hostaddr=" + addr;
-            paramsList.add(USBout);
-        }
-        if (getMachine().getEnableUSB4() != 0) {
-            String usbPath = getMachine().getUSB4path();
-            String bus = usbPath.split("\\.")[0];
-            String addr = usbPath.split("\\.")[1];
-            //-device usb-host,hostbus=3,hostaddr=4
-            String USBout = "-device usb-host,hostbus=" + bus + ",hostaddr=" + addr;
-            paramsList.add(USBout);
-        }
     }
 
     private void addNetworkOptions(ArrayList<String> paramsList) throws Exception {
@@ -532,10 +464,15 @@ private String getQemuLibrary() {
 
     private void addGraphicsOptions(ArrayList<String> paramsList) {
         if (getMachine().getVga() != null) {
-            if (getMachine().getVga().equals("nographic")) {
-                paramsList.add("-nographic");
-            } else{
+            if (getMachine().getVga().equals("Default")) {
+                //do nothing
+            } else if (getMachine().getVga().equals("virtio-gpu-pci")) {
                 paramsList.add("-device");
+                paramsList.add(getMachine().getVga());
+            } else if (getMachine().getVga().equals("nographic")) {
+                paramsList.add("-nographic");
+            } else {
+                paramsList.add("-vga");
                 paramsList.add(getMachine().getVga());
             }
         }
@@ -585,7 +522,6 @@ private String getQemuLibrary() {
     }
 
     private String getKernel() {
-        String a = getMachine().getKernel();
         return FileUtils.encodeDocumentFilePath(getMachine().getKernel());
     }
 
@@ -611,10 +547,35 @@ private String getQemuLibrary() {
 
     public void addHardDisk(ArrayList<String> paramsList, String imagePath, int index, String hdInterface) {
         if (imagePath != null && !imagePath.trim().equals("")) {
-            paramsList.add("-device nvme,drive=drive" + index +",serial=drive" + index + ",bootindex=" + index+1);
-            if (!imagePath.equals("")) {
+            if (Config.legacyDrives) {
+                switch (index) {
+                    case 0:
+                        paramsList.add("-hda");
+                        break;
+                    case 1:
+                        paramsList.add("-hdb");
+                        break;
+                    case 2:
+                        paramsList.add("-hdc");
+                        break;
+                    case 3:
+                        paramsList.add("-hdd");
+                        break;
+                }
+                paramsList.add(imagePath);
+            } else {
                 paramsList.add("-drive");
-                paramsList.add("if=none,media=disk,id=drive" + index + ",file=" + imagePath);
+                String param = "index=" + index;
+                param += ",if=";
+                param += hdInterface;
+                param += ",media=disk";
+                if (!imagePath.equals("")) {
+                    param += ",file=" + imagePath;
+                }
+                String cache = LimboSettingsManager.getDiskCache(LimboApplication.getInstance());
+                if(cache != null && !cache.equals("default"))
+                    param += ",cache=" + cache;
+                paramsList.add(param);
             }
         }
     }
@@ -638,9 +599,20 @@ private String getQemuLibrary() {
     public void addRemovableDrives(ArrayList<String> paramsList) {
         String cdImagePath = getDriveFilePath(getMachine().getCdImagePath());
         if (cdImagePath != null) {
-            paramsList.add("-device usb-storage,drive=cdrom0,removable=true,bootindex=0,bus=usb-bus.0");
-            paramsList.add("-drive");
-            paramsList.add("if=none,media=cdrom,id=cdrom0,file=" + cdImagePath);
+            if (Config.legacyDrives) {
+                paramsList.add("-cdrom");
+                paramsList.add(cdImagePath);
+            } else {
+                paramsList.add("-drive"); //empty
+                String param = "index=2";
+                param += ",if=";
+                param += getMachine().getCDInterface();
+                param += ",media=cdrom";
+                if (!cdImagePath.equals("")) {
+                    param += ",file=" + cdImagePath;
+                }
+                paramsList.add(param);
+            }
         }
 
         String fdaImagePath = getDriveFilePath(getMachine().getFdaImagePath());
@@ -769,40 +741,14 @@ private String getQemuLibrary() {
             ignoreBreakpointInvalidation(LimboSettingsManager.getIgnoreBreakpointInvalidation(LimboApplication.getInstance())?1:0, 2000);
             QmpClient.setExternal(LimboSettingsManager.getEnableExternalQMP(LimboApplication.getInstance()));
             String libFilename = getQemuLibrary();
-
-            String BasefileDir = LimboApplication.getBasefileDir();
-            String qemuExecDir = LimboApplication.getBasefileDir() + "/bin/qemu-system-aarch64";
-
-            Shell.cmd("chmod 711 " + qemuExecDir).exec();
-            Shell.cmd("pwd").exec();
-
-            StringBuilder qemuArgv = new StringBuilder();
-
-            for (String param : params) {
-                qemuArgv.append(" ");
-                qemuArgv.append(param);
-            }
-            Log.d(TAG, qemuExecDir + qemuArgv);
-            Shell.Result result;
-
-            if (getMachine().getSetFourCore() == 1){
-                // this will force qemu run on cpu 0-3, which can make sure firmware can boot successfully
-                result = Shell.cmd( "taskset f " +qemuExecDir + qemuArgv).exec();
-            }else{
-                // normal mode
-                result = Shell.cmd(qemuExecDir + qemuArgv).exec();
-            }
-
-            if (result.isSuccess()){
-                return "VM shutdown";
-            }else{
-                return "QEMU return error!";
-            }
-
+            res = start(Config.storagedir, LimboApplication.getBasefileDir(),
+                    libFilename, FileUtils.getNativeLibDir(LimboApplication.getInstance()) + "/" + libFilename,
+                    Config.SDLHintScale, params);
         } catch (Exception ex) {
             ToastUtils.toastLong(LimboApplication.getInstance(), ex.getMessage());
-            return "1";
+            return res;
         }
+        return res;
     }
 
     private void changeVncPass(final Context context, final long delay) {
@@ -835,23 +781,11 @@ private String getQemuLibrary() {
             @Override
             public void run() {
                 if (restart != 0) {
-                    try {
-                        Log.d(TAG, "Trying to use all cpu cores! ");
-                        Process su = Runtime.getRuntime().exec("su -c set `pidof qemu-system-aarch64` && su -c taskset -pa ff $1");
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                    QmpClient.sendCommand(QmpClient.getResetCommand());
                 } else {
                     //XXX: Qmp command only halts the VM but doesn't exit so we use force close
-                    //QmpClient.sendCommand(QmpClient.powerDown());
-                    //stop(restart);
-                    //need to be smarter here
-                    try {
-                        Log.d(TAG, "Killing Qemu process!");
-                        Process su = Runtime.getRuntime().exec("su -c killall qemu-system-aarch64");
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+//            QmpClient.sendCommand(QmpClient.powerDown());
+                    stop(restart);
                 }
             }
         }).start();

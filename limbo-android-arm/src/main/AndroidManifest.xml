@@ -12,7 +12,7 @@
         <activity
             android:name="LimboEmuActivity"
             android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize"
-            android:label="Limbo pKVM"
+            android:label="Limbo Reborn AARCH64"
             android:launchMode="singleTop"
             android:theme="@style/Theme.AppCompat.NoActionBar" >
             <intent-filter>

@@ -175,7 +175,7 @@ public class Dispatcher implements ViewListener {
                 getMachine().setNetworkCard(convertString(property, value));
                 break;
             case DISABLE_HPET:
-                getMachine().setUnlockedUEFI(convertBoolean(property, value) ? 1 : 0);
+                getMachine().setDisableHPET(convertBoolean(property, value) ? 1 : 0);
                 break;
             case DISABLE_TSC:
                 getMachine().setDisableTSC(convertBoolean(property, value) ? 1 : 0);
@@ -184,7 +184,7 @@ public class Dispatcher implements ViewListener {
                 getMachine().setVga(convertString(property, value));
                 break;
             case DISABLE_ACPI:
-                getMachine().setSetFourCore((convertBoolean(property, value) ? 1 : 0));
+                getMachine().setDisableACPI((convertBoolean(property, value) ? 1 : 0));
                 break;
             case DISABLE_FD_BOOT_CHK:
                 getMachine().setDisableFdBootChk((convertBoolean(property, value) ? 1 : 0));
@@ -192,20 +192,8 @@ public class Dispatcher implements ViewListener {
             case ENABLE_KVM:
                 getMachine().setEnableKVM((convertBoolean(property, value) ? 1 : 0));
                 break;
-            case USB1_ENABLE:
-                getMachine().setenableUSB1((convertBoolean(property, value) ? 1 : 0));
-                break;
-            case USB2_ENABLE:
-                getMachine().setenableUSB2((convertBoolean(property, value) ? 1 : 0));
-                break;
-            case USB3_ENABLE:
-                getMachine().setenableUSB3((convertBoolean(property, value) ? 1 : 0));
-                break;
-            case USB4_ENABLE:
-                getMachine().setenableUSB4((convertBoolean(property, value) ? 1 : 0));
-                break;
-            case ENABLE_UEFI:
-                getMachine().setEnableUEFI((convertBoolean(property, value) ? 1 : 0));
+            case ENABLE_MTTCG:
+                getMachine().setEnableMTTCG((convertBoolean(property, value) ? 1 : 0));
                 break;
             case HOSTFWD:
                 getMachine().setHostFwd(convertString(property, value));
@@ -227,16 +215,6 @@ public class Dispatcher implements ViewListener {
                 break;
             case EXTRA_PARAMS:
                 getMachine().setExtraParams(convertString(property,value));
-            case DNS:
-                getMachine().setDNS(convertString(property,value));
-            case USB1_PATH:
-                getMachine().setUSB1Path(convertString(property,value));
-            case USB2_PATH:
-                getMachine().setUSB2Path(convertString(property,value));
-            case USB3_PATH:
-                getMachine().setUSB3Path(convertString(property,value));
-            case USB4_PATH:
-                getMachine().setUSB4Path(convertString(property,value));
             default:
                 throw new RuntimeException("Umapped UI field: " + property);
         }

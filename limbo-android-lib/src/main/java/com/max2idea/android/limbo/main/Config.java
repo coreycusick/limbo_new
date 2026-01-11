@@ -157,7 +157,7 @@ public class Config {
     public static String defaultVNCHost = "127.0.0.1";
     //It seems that new versions of qemu expect a relative number
     //  so we stop using absolute port numbers
-    public static final int defaultVNCPort = 0;
+    public static final int defaultVNCPort = 1;
 
     //Keyboard Layout
     public static String defaultKeyboardLayout = "en-us";
@@ -168,7 +168,7 @@ public class Config {
     public static boolean enableToggleKeyboard = false;
 
     //override this at the app level it dependes on the host arch
-    public static boolean enableUEFI = true;
+    public static boolean enableMTTCG = true;
 
     public static LinkedHashMap<String, LinksManager.LinkInfo> osImages = new LinkedHashMap<>();
     public static boolean processMouseHistoricalEvents = false;

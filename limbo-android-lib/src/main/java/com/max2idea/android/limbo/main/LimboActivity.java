@@ -126,10 +126,6 @@ public class LimboActivity extends AppCompatActivity
     private EditText mHOSTFWD;
     private EditText mAppend;
     private EditText mExtraParams;
-    private EditText mUSB1path;
-    private EditText mUSB2path;
-    private EditText mUSB3path;
-    private EditText mUSB4path;
     private TextView mStatusText;
     private Spinner mMachine;
     private Spinner mCPU;
@@ -158,10 +154,6 @@ public class LimboActivity extends AppCompatActivity
     private CheckBox mFDBenable;
     private CheckBox mSDenable;
     private ImageView mCDOptions;
-    private CheckBox mUSB1check;
-    private CheckBox mUSB2check;
-    private CheckBox mUSB3check;
-    private CheckBox mUSB4check;
 
     // misc
     private Spinner mRamSize;
@@ -171,11 +163,11 @@ public class LimboActivity extends AppCompatActivity
     private Spinner mVGAConfig;
     private Spinner mSoundCard;
     private Spinner mUI;
-    private CheckBox mSetFourCore;
-    private CheckBox mUnlockedUEFI;
+    private CheckBox mDisableACPI;
+    private CheckBox mDisableHPET;
     private CheckBox mDisableTSC;
     private CheckBox mEnableKVM;
-    private CheckBox mEnableUEFI;
+    private CheckBox mEnableMTTCG;
     private Spinner mKeyboard;
     private Spinner mMouse;
 
@@ -195,7 +187,6 @@ public class LimboActivity extends AppCompatActivity
     private LinearLayout mRemovableStorageSectionDetails;
     private LinearLayout mNetworkSectionDetails;
     private LinearLayout mAudioSectionDetails;
-    private LinearLayout mUSBSectionDetails;
 
     //summary
     private TextView mUISectionSummary;
@@ -210,7 +201,7 @@ public class LimboActivity extends AppCompatActivity
 
     //layouts
     private NestedScrollView mScrollView;
-    private boolean firstUEFICheck;
+    private boolean firstMTTCGCheck;
     private ViewListener viewListener;
 
     public void changeStatus(final MachineStatus status_changed) {
@@ -382,8 +373,8 @@ public class LimboActivity extends AppCompatActivity
                 if (getMachine() == null)
                     return;
                 final String cpuNum = (String) ((ArrayAdapter<?>) mCPUNum.getAdapter()).getItem(position);
-                if (position > 0 && getMachine().getEnableUEFI() != 1 && getMachine().getEnableKVM() != 1 && !firstUEFICheck) {
-                    firstUEFICheck = true;
+                if (position > 0 && getMachine().getEnableMTTCG() != 1 && getMachine().getEnableKVM() != 1 && !firstMTTCGCheck) {
+                    firstMTTCGCheck = true;
                     promptMultiCPU(cpuNum);
                 } else {
                     notifyFieldChange(MachineProperty.CPUNUM, cpuNum);
@@ -531,7 +522,7 @@ public class LimboActivity extends AppCompatActivity
             }
         });
 
-        mSetFourCore.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+        mDisableACPI.setOnCheckedChangeListener(new OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton viewButton, boolean isChecked) {
                 if (getMachine() == null)
                     return;
@@ -539,7 +530,7 @@ public class LimboActivity extends AppCompatActivity
             }
         });
 
-        mUnlockedUEFI.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+        mDisableHPET.setOnCheckedChangeListener(new OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton viewButton, boolean isChecked) {
                 if (getMachine() == null)
                     return;
@@ -561,7 +552,8 @@ public class LimboActivity extends AppCompatActivity
                 if (getMachine() == null)
                     return;
                 if (!hasFocus) {
-                    notifyFieldChange(MachineProperty.DNS, mDNS.getText().toString());
+                    setDNSServer(mDNS.getText().toString());
+                    LimboSettingsManager.setDNSServer(LimboActivity.this, mDNS.getText().toString());
                 }
             }
         });
@@ -599,50 +591,6 @@ public class LimboActivity extends AppCompatActivity
             }
         });
 
-        mUSB1path.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-            @Override
-            public void onFocusChange(View view, boolean hasFocus) {
-                if (getMachine() == null)
-                    return;
-                if (!hasFocus) {
-                    notifyFieldChange(MachineProperty.USB1_PATH, mUSB1path.getText().toString());
-                }
-            }
-        });
-
-        mUSB2path.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-            @Override
-            public void onFocusChange(View view, boolean hasFocus) {
-                if (getMachine() == null)
-                    return;
-                if (!hasFocus) {
-                    notifyFieldChange(MachineProperty.USB2_PATH, mUSB2path.getText().toString());
-                }
-            }
-        });
-
-        mUSB3path.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-            @Override
-            public void onFocusChange(View view, boolean hasFocus) {
-                if (getMachine() == null)
-                    return;
-                if (!hasFocus) {
-                    notifyFieldChange(MachineProperty.USB3_PATH, mUSB3path.getText().toString());
-                }
-            }
-        });
-
-        mUSB4path.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-            @Override
-            public void onFocusChange(View view, boolean hasFocus) {
-                if (getMachine() == null)
-                    return;
-                if (!hasFocus) {
-                    notifyFieldChange(MachineProperty.USB4_PATH, mUSB4path.getText().toString());
-                }
-            }
-        });
-
         OnClickListener resetClickListener = new OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -655,11 +603,6 @@ public class LimboActivity extends AppCompatActivity
         mAppend.setOnClickListener(resetClickListener);
         mHOSTFWD.setOnClickListener(resetClickListener);
         mExtraParams.setOnClickListener(resetClickListener);
-        mUSB1path.setOnClickListener(resetClickListener);
-        mUSB2path.setOnClickListener(resetClickListener);
-        mUSB3path.setOnClickListener(resetClickListener);
-        mUSB4path.setOnClickListener(resetClickListener);
-
         mEnableKVM.setOnCheckedChangeListener(new OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton viewButton, boolean isChecked) {
                 if (getMachine() == null)
@@ -674,53 +617,14 @@ public class LimboActivity extends AppCompatActivity
 
         });
 
-        mUSB1check.setOnCheckedChangeListener(new OnCheckedChangeListener() {
-            public void onCheckedChanged(CompoundButton viewButton, boolean isChecked) {
-                if (getMachine() == null)
-                    return;
-
-                notifyFieldChange(MachineProperty.USB1_ENABLE, isChecked);
-            }
-
-        });
-
-        mUSB2check.setOnCheckedChangeListener(new OnCheckedChangeListener() {
-            public void onCheckedChanged(CompoundButton viewButton, boolean isChecked) {
-                if (getMachine() == null)
-                    return;
-                notifyFieldChange(MachineProperty.USB2_ENABLE, isChecked);
-
-            }
-
-        });
-
-        mUSB3check.setOnCheckedChangeListener(new OnCheckedChangeListener() {
-            public void onCheckedChanged(CompoundButton viewButton, boolean isChecked) {
-                if (getMachine() == null)
-                    return;
-                notifyFieldChange(MachineProperty.USB3_ENABLE, isChecked);
-
-            }
-
-        });
-
-        mUSB4check.setOnCheckedChangeListener(new OnCheckedChangeListener() {
-            public void onCheckedChanged(CompoundButton viewButton, boolean isChecked) {
-                if (getMachine() == null)
-                    return;
-                notifyFieldChange(MachineProperty.USB4_ENABLE, isChecked);
-
-            }
-
-        });
-        mEnableUEFI.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+        mEnableMTTCG.setOnCheckedChangeListener(new OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton viewButton, boolean isChecked) {
                 if (getMachine() == null)
                     return;
                 if (isChecked) {
-                    promptEnableUEFI();
+                    promptEnableMTTCG();
                 } else {
-                    notifyFieldChange(MachineProperty.ENABLE_UEFI, isChecked);
+                    notifyFieldChange(MachineProperty.ENABLE_MTTCG, isChecked);
                 }
             }
         });
@@ -751,12 +655,12 @@ public class LimboActivity extends AppCompatActivity
     private void setCPUOptions() {
         if (MachineController.getInstance().getCurrStatus() != MachineStatus.Running &&
                 (LimboApplication.arch == Config.Arch.x86 || LimboApplication.arch == Config.Arch.x86_64)) {
-            mSetFourCore.setEnabled(true);
-            mUnlockedUEFI.setEnabled(true);
+            mDisableACPI.setEnabled(true);
+            mDisableHPET.setEnabled(true);
             mDisableTSC.setEnabled(true);
         } else {
-            mSetFourCore.setEnabled(false);
-            mUnlockedUEFI.setEnabled(false);
+            mDisableACPI.setEnabled(false);
+            mDisableHPET.setEnabled(false);
             mDisableTSC.setEnabled(false);
         }
     }
@@ -773,7 +677,7 @@ public class LimboActivity extends AppCompatActivity
         DialogInterface.OnClickListener okListener = new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
                 notifyFieldChange(MachineProperty.ENABLE_KVM, true);
-                //mEnableUEFI.setChecked(false);
+                mEnableMTTCG.setChecked(false);
             }
         };
 
@@ -801,33 +705,33 @@ public class LimboActivity extends AppCompatActivity
                 cancelListener, getString(R.string.KVMHelp), helpListener);
     }
 
-    private void promptEnableUEFI() {
+    private void promptEnableMTTCG() {
         DialogInterface.OnClickListener okListener = new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
-                notifyFieldChange(MachineProperty.ENABLE_UEFI, true);
-                //mEnableKVM.setChecked(false);
+                notifyFieldChange(MachineProperty.ENABLE_MTTCG, true);
+                mEnableKVM.setChecked(false);
             }
         };
         DialogInterface.OnClickListener cancelListener =
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
-                        notifyFieldChange(MachineProperty.ENABLE_UEFI, false);
-                        mEnableUEFI.setChecked(false);
+                        notifyFieldChange(MachineProperty.ENABLE_MTTCG, false);
+                        mEnableMTTCG.setChecked(false);
                     }
                 };
         DialogInterface.OnClickListener helpListener =
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
-                        mEnableUEFI.setChecked(false);
-                        notifyFieldChange(MachineProperty.ENABLE_UEFI, false);
+                        mEnableMTTCG.setChecked(false);
+                        notifyFieldChange(MachineProperty.ENABLE_MTTCG, false);
                         LimboActivityCommon.goToURL(LimboActivity.this, Config.faqLink);
                     }
                 };
-        DialogUtils.UIAlert(LimboActivity.this, getString(R.string.enableUEFI),
-                getString(R.string.enableUEFIWarning),
+        DialogUtils.UIAlert(LimboActivity.this, getString(R.string.enableMTTCG),
+                getString(R.string.enableMTTCGWarning),
                 16, false, getString(android.R.string.ok), okListener,
                 getString(android.R.string.cancel)
-                , cancelListener, getString(R.string.UEFIHelp), helpListener);
+                , cancelListener, getString(R.string.mttcgHelp), helpListener);
     }
 
     private void promptMultiCPU(final String cpuNum) {
@@ -972,6 +876,28 @@ public class LimboActivity extends AppCompatActivity
         });
     }
 
+    protected synchronized void setDNSServer(String string) {
+
+        File resolvConf = new File(LimboApplication.getBasefileDir() + "/etc/resolv.conf");
+        FileOutputStream fileStream = null;
+        try {
+            fileStream = new FileOutputStream(resolvConf);
+            String str = "nameserver " + string + "\n\n";
+            byte[] data = str.getBytes();
+            fileStream.write(data);
+        } catch (Exception ex) {
+            Log.e(TAG, "Could not write DNS to file: " + ex);
+        } finally {
+            if (fileStream != null)
+                try {
+                    fileStream.close();
+                } catch (IOException e) {
+
+                    e.printStackTrace();
+                }
+        }
+    }
+
     private void disableListeners() {
         if (mMachine == null)
             return;
@@ -982,11 +908,11 @@ public class LimboActivity extends AppCompatActivity
         mCPU.setOnItemSelectedListener(null);
         mCPUNum.setOnItemSelectedListener(null);
         mRamSize.setOnItemSelectedListener(null);
-        mSetFourCore.setOnCheckedChangeListener(null);
-        mUnlockedUEFI.setOnCheckedChangeListener(null);
+        mDisableACPI.setOnCheckedChangeListener(null);
+        mDisableHPET.setOnCheckedChangeListener(null);
         mDisableTSC.setOnCheckedChangeListener(null);
         mEnableKVM.setOnCheckedChangeListener(null);
-        mEnableUEFI.setOnCheckedChangeListener(null);
+        mEnableMTTCG.setOnCheckedChangeListener(null);
         mHDA.setOnItemSelectedListener(null);
         mHDB.setOnItemSelectedListener(null);
         mHDC.setOnItemSelectedListener(null);
@@ -1003,14 +929,6 @@ public class LimboActivity extends AppCompatActivity
         mDNS.setOnFocusChangeListener(null);
         mHOSTFWD.setOnFocusChangeListener(null);
         mExtraParams.setOnFocusChangeListener(null);
-        mUSB1path.setOnFocusChangeListener(null);
-        mUSB2path.setOnFocusChangeListener(null);
-        mUSB3path.setOnFocusChangeListener(null);
-        mUSB4path.setOnFocusChangeListener(null);
-        mUSB1check.setOnCheckedChangeListener(null);
-        mUSB2check.setOnCheckedChangeListener(null);
-        mUSB3check.setOnCheckedChangeListener(null);
-        mUSB4check.setOnCheckedChangeListener(null);
     }
 
     /**
@@ -1472,13 +1390,7 @@ public class LimboActivity extends AppCompatActivity
         mCPUNum.setEnabled(flag);
         mRamSize.setEnabled(flag);
         mEnableKVM.setEnabled(flag && Config.enableKVM);
-        mEnableUEFI.setEnabled(flag && Config.enableUEFI);
-
-        //USB
-        mUSB1check.setEnabled(flag);
-        mUSB2check.setEnabled(flag);
-        mUSB3check.setEnabled(flag);
-        mUSB4check.setEnabled(flag);
+        mEnableMTTCG.setEnabled(flag && Config.enableMTTCG);
 
         //drives
         mHDA.setEnabled(flag);
@@ -1515,16 +1427,10 @@ public class LimboActivity extends AppCompatActivity
         mHOSTFWD.setEnabled(flag && mNetConfig.getSelectedItemPosition() > 0);
 
         //advanced
-        mSetFourCore.setEnabled(flag);
-        mUnlockedUEFI.setEnabled(flag);
+        mDisableACPI.setEnabled(flag);
+        mDisableHPET.setEnabled(flag);
         mDisableTSC.setEnabled(flag);
         mExtraParams.setEnabled(flag);
-
-        //
-        mUSB1path.setEnabled(flag);
-        mUSB2path.setEnabled(flag);
-        mUSB3path.setEnabled(flag);
-        mUSB4path.setEnabled(flag);
 
     }
 
@@ -1684,9 +1590,9 @@ public class LimboActivity extends AppCompatActivity
         mUI = findViewById(R.id.uival);
         mRamSize = findViewById(R.id.rammemval);
         mEnableKVM = findViewById(R.id.enablekvmval);
-        mEnableUEFI = findViewById(R.id.enableUEFIval);
-        mSetFourCore = findViewById(R.id.acpival);
-        mUnlockedUEFI = findViewById(R.id.hpetval);
+        mEnableMTTCG = findViewById(R.id.enablemttcgval);
+        mDisableACPI = findViewById(R.id.acpival);
+        mDisableHPET = findViewById(R.id.hpetval);
         mDisableTSC = findViewById(R.id.tscval);
 
         //disks
@@ -1741,25 +1647,11 @@ public class LimboActivity extends AppCompatActivity
         mNetConfig = findViewById(R.id.netcfgval);
         mNetworkCard = findViewById(R.id.netDevicesVal);
         mDNS = findViewById(R.id.dnsval);
-        //setDefaultDNServer();
+        setDefaultDNServer();
         mHOSTFWD = findViewById(R.id.hostfwdval);
 
         // advanced
         mExtraParams = findViewById(R.id.extraparamsval);
-
-
-        // usb
-        mUSB1check = findViewById(R.id.usb1check);
-        mUSB2check = findViewById(R.id.usb2check);
-        mUSB3check = findViewById(R.id.usb3check);
-        mUSB4check = findViewById(R.id.usb4check);
-
-        mUSB1path = findViewById(R.id.usb1path);
-        mUSB2path = findViewById(R.id.usb2path);
-        mUSB3path = findViewById(R.id.usb3path);
-        mUSB4path = findViewById(R.id.usb4path);
-
-
 
         disableFeatures();
         enableRemovableDeviceOptions(false);
@@ -1774,19 +1666,37 @@ public class LimboActivity extends AppCompatActivity
         }
 
         LinearLayout mDisableTSCLayout = findViewById(R.id.tscl);
-        LinearLayout mSetFourCoreLayout = findViewById(R.id.acpil);
-        LinearLayout mUnlockedUEFILayout = findViewById(R.id.hpetl);
+        LinearLayout mDisableACPILayout = findViewById(R.id.acpil);
+        LinearLayout mDisableHPETLayout = findViewById(R.id.hpetl);
         LinearLayout mEnableKVMLayout = findViewById(R.id.kvml);
 
         if (LimboApplication.arch != Config.Arch.x86 && LimboApplication.arch != Config.Arch.x86_64) {
             mDisableTSCLayout.setVisibility(View.GONE);
-            //mSetFourCoreLayout.setVisibility(View.GONE);
-            //mUnlockedUEFILayout.setVisibility(View.GONE);
+            mDisableACPILayout.setVisibility(View.GONE);
+            mDisableHPETLayout.setVisibility(View.GONE);
         }
         if (LimboApplication.arch != Config.Arch.x86 && LimboApplication.arch != Config.Arch.x86_64
                 && LimboApplication.arch != Config.Arch.arm && LimboApplication.arch != Config.Arch.arm64) {
             mEnableKVMLayout.setVisibility(View.GONE);
         }
+    }
+
+    private void setDefaultDNServer() {
+
+        Thread thread = new Thread(new Runnable() {
+            public void run() {
+                final String defaultDNSServer = LimboSettingsManager.getDNSServer(LimboActivity.this);
+                new Handler(Looper.getMainLooper()).post(new Runnable() {
+                    public void run() {
+                        // Code here will run in UI thread
+                        mDNS.setText(defaultDNSServer);
+                    }
+                });
+            }
+        });
+        thread.setPriority(Thread.MIN_PRIORITY);
+        thread.start();
+
     }
 
     private void setupSections() {
@@ -1827,19 +1737,6 @@ public class LimboActivity extends AppCompatActivity
                     disableListeners();
                     disableRemovableDiskListeners();
                     toggleSectionVisibility(mUserInterfaceSectionDetails);
-                    enableListenersDelayed();
-                }
-            });
-
-            mUSBSectionDetails = findViewById(R.id.usbSectionDetails);
-            mUSBSectionDetails.setVisibility(View.GONE);
-            //mUSBSectionSummary = findViewById(R.id.susbsectionsummaryStr);
-            LinearLayout mUSBSectionHeader = findViewById(R.id.usbheaderl);
-            mUSBSectionHeader.setOnClickListener(new OnClickListener() {
-                public void onClick(View view) {
-                    disableListeners();
-                    disableRemovableDiskListeners();
-                    toggleSectionVisibility(mUSBSectionDetails);
                     enableListenersDelayed();
                 }
             });
@@ -1966,14 +1863,14 @@ public class LimboActivity extends AppCompatActivity
                     + ", CPU: " + getMachine().getCpu()
                     + ", " + getMachine().getCpuNum() + " CPU" + ((getMachine().getCpuNum() > 1) ? "s" : "")
                     + ", " + getMachine().getMemory() + " MB";
-            if (mEnableUEFI.isChecked())
-                text = appendOption("Enable UEFI", text);
+            if (mEnableMTTCG.isChecked())
+                text = appendOption("Enable MTTCG", text);
             if (mEnableKVM.isChecked())
                 text = appendOption("Enable KVM", text);
-            if (mSetFourCore.isChecked())
-                text = appendOption("100% Mode", text);
-            if (mUnlockedUEFI.isChecked())
-                text = appendOption("Unlocked UEFI", text);
+            if (mDisableACPI.isChecked())
+                text = appendOption("Disable ACPI", text);
+            if (mDisableHPET.isChecked())
+                text = appendOption("Disable HPET", text);
             if (mDisableTSC.isChecked())
                 text = appendOption("Disable TSC", text);
             mCPUSectionSummary.setText(text);
@@ -2184,32 +2081,6 @@ public class LimboActivity extends AppCompatActivity
         else
             mExtraParams.setText("");
 
-        if (getMachine().getUSB1path() != null)
-            mUSB1path.setText(getMachine().getUSB1path());
-        else
-            mUSB1path.setText("");
-
-        if (getMachine().getUSB2path() != null)
-            mUSB2path.setText(getMachine().getUSB2path());
-        else
-            mUSB2path.setText("");
-
-        if (getMachine().getUSB3path() != null)
-            mUSB3path.setText(getMachine().getUSB3path());
-        else
-            mUSB3path.setText("");
-
-        if (getMachine().getUSB4path() != null)
-            mUSB4path.setText(getMachine().getUSB4path());
-        else
-            mUSB4path.setText("");
-
-
-        if (getMachine().getDNS() != null)
-            mDNS.setText(getMachine().getDNS());
-        else
-            mDNS.setText("");
-
         // CDROM
         seMachineDriveValue(FileType.CDROM, getMachine().getCdImagePath());
 
@@ -2239,19 +2110,12 @@ public class LimboActivity extends AppCompatActivity
         SpinnerAdapter.setDiskAdapterValue(mKeyboard, getMachine().getKeyboard());
 
         // motherboard settings
-        mSetFourCore.setChecked(getMachine().getSetFourCore() == 1);
-        mUnlockedUEFI.setChecked(getMachine().getUnlockedUEFI() == 1);
+        mDisableACPI.setChecked(getMachine().getDisableAcpi() == 1);
+        mDisableHPET.setChecked(getMachine().getDisableHPET() == 1);
         if (LimboApplication.arch == Config.Arch.x86 || LimboApplication.arch == Config.Arch.x86_64)
             mDisableTSC.setChecked(getMachine().getDisableTSC() == 1);
         mEnableKVM.setChecked(getMachine().getEnableKVM() == 1);
-        mEnableUEFI.setChecked(getMachine().getEnableUEFI() == 1);
-
-        mUSB1check.setChecked(getMachine().getEnableUSB1() == 1);
-        mUSB2check.setChecked(getMachine().getEnableUSB2() == 1);
-        mUSB3check.setChecked(getMachine().getEnableUSB3() == 1);
-        mUSB4check.setChecked(getMachine().getEnableUSB4() == 1);
-
-
+        mEnableMTTCG.setChecked(getMachine().getEnableMTTCG() == 1);
 
         enableNonRemovableDeviceOptions(true);
         enableRemovableDeviceOptions(!MachineController.getInstance().isRunning());
@@ -2342,11 +2206,11 @@ public class LimboActivity extends AppCompatActivity
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
 
         String[] arraySpinner = new String[5];
-        arraySpinner[0] = "4 GB (Growable)";
-        arraySpinner[1] = "10 GB (Growable)";
-        arraySpinner[2] = "20 GB (Growable)";
-        arraySpinner[3] = "48 GB (Growable)";
-        arraySpinner[4] = "64 GB (Growable)";
+        arraySpinner[0] = "1GB (Growable)";
+        arraySpinner[1] = "2GB (Growable)";
+        arraySpinner[2] = "4GB (Growable)";
+        arraySpinner[3] = "10 GB (Growable)";
+        arraySpinner[4] = "20 GB (Growable)";
 
         ArrayAdapter<?> sizeAdapter = new ArrayAdapter<Object>(this, R.layout.custom_spinner_item, arraySpinner);
         sizeAdapter.setDropDownViewResource(R.layout.custom_spinner_dropdown_item);
@@ -2371,17 +2235,17 @@ public class LimboActivity extends AppCompatActivity
                 }
 
                 int sizeSel = size.getSelectedItemPosition();
-                String templateImage = "hd4g.qcow2";
+                String templateImage = "hd1g.qcow2";
                 if (sizeSel == 0) {
-                    templateImage = "hd4g.qcow2";
+                    templateImage = "hd1g.qcow2";
                 } else if (sizeSel == 1) {
-                    templateImage = "hd10g.qcow2";
+                    templateImage = "hd2g.qcow2";
                 } else if (sizeSel == 2) {
-                    templateImage = "hd20g.qcow2";
+                    templateImage = "hd4g.qcow2";
                 } else if (sizeSel == 3) {
-                    templateImage = "hg48g.qcow2";
+                    templateImage = "hd10g.qcow2";
                 } else if (sizeSel == 4) {
-                    templateImage = "hg64g.qcow2";
+                    templateImage = "hd20g.qcow2";
                 }
 
                 String image = imageNameView.getText().toString();
@@ -2565,9 +2429,10 @@ public class LimboActivity extends AppCompatActivity
     }
 
     private void populateRAM() {
-        String[] arraySpinner = new String[33];
-        for (int i = 1; i < arraySpinner.length + 1; i++) {
-            arraySpinner[i-1] = i * 256 + "";
+        String[] arraySpinner = new String[4 * 256];
+        arraySpinner[0] = 4 + "";
+        for (int i = 1; i < arraySpinner.length; i++) {
+            arraySpinner[i] = i * 8 + "";
         }
         ArrayAdapter<String> ramAdapter = new ArrayAdapter<>(this, R.layout.custom_spinner_item, arraySpinner);
         ramAdapter.setDropDownViewResource(R.layout.custom_spinner_dropdown_item);
